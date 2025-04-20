@@ -1,12 +1,14 @@
 #ifndef _MONKEY_H_
 #define _MONKEY_H_
 
+#include "arena.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 
-typedef enum {
+typedef enum
+{
     // Special
     TT_ILLEGAL,
     TT_EOF,
@@ -35,13 +37,13 @@ typedef enum {
 
 typedef struct {
     TokenType type;
-    char literal;
+    int lit_size;
+    char *literal;
 } Token;
 
-extern const char *TT_STR[14];
-
-Token token_new(TokenType type, char ch);
+Token token_new(TokenType type, char *ch);
 const char *tt_to_str(TokenType tt);
+TokenType token_lookup_ident(const char *ident);
 
 typedef struct {
     char *input;
@@ -52,10 +54,14 @@ typedef struct {
     int read_position;
     // Current char under examination
     char ch;
+    Arena arena;
 } Lexer;
 
-void lexer_new(Lexer *l, char *input, int input_size);
-void lexer_read_char(Lexer *l);
-Token lexer_next_token(Lexer *l);
+void lexer_init(Lexer *lex, char *input, int input_size);
+void lexer_read_char(Lexer *lex);
+Token lexer_next_token(Lexer *lex);
+char *lexer_read_identifier(Lexer *lex, int *lit_size);
+void lexer_skip_whitespace(Lexer *lex);
+char *lexer_read_number(Lexer *lex, int *lit_size);
 
 #endif // _MONKEY_H_

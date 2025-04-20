@@ -1,64 +1,119 @@
+#include "arena.h"
 #include "monkey.h"
+#include <string.h>
 
-void lexer_new(Lexer *l, char *input, int input_size)
+static bool _is_letter(char ch);
+static bool _is_digit(char ch);
+
+void lexer_init(Lexer *lex, char *input, int input_size)
 {
-    *l = (Lexer) {0};
-    l->input = input;
-    l->input_size = input_size;
-    lexer_read_char(l);
+    *lex = (Lexer){0};
+    lex->input = input;
+    lex->input_size = input_size;
+    lex->arena = (Arena){0};
+    lexer_read_char(lex);
 }
 
-void lexer_read_char(Lexer *l)
+void lexer_read_char(Lexer *lex)
 {
-    if (l->read_position >= l->input_size) {
-        l->ch = 0;
+    if (lex->read_position >= lex->input_size) {
+        lex->ch = 0;
     } else {
-        l->ch = l->input[l->read_position];
+        lex->ch = lex->input[lex->read_position];
     }
-    l->position = l->read_position;
-    l->read_position += 1;
+    lex->position = lex->read_position;
+    lex->read_position += 1;
 }
 
-Token lexer_next_token(Lexer *l)
+Token lexer_next_token(Lexer *lex)
 {
     Token tok = {0};
 
-    switch (l->ch) {
+    lexer_skip_whitespace(lex);
+    char *lit_ch = arena_memdup(&lex->arena, lex->input + lex->position, 1);
+
+    switch (lex->ch) {
         case '=':
-            tok = token_new(TT_ASSIGN, l->ch);
+            tok = token_new(TT_ASSIGN, lit_ch);
             break;
         case ';':
-            tok = token_new(TT_SEMICOLON, l->ch);
+            tok = token_new(TT_SEMICOLON, lit_ch);
             break;
         case '(':
-            tok = token_new(TT_LPAREN, l->ch);
+            tok = token_new(TT_LPAREN, lit_ch);
             break;
         case ')':
-            tok = token_new(TT_RPAREN, l->ch);
+            tok = token_new(TT_RPAREN, lit_ch);
             break;
         case ',':
-            tok = token_new(TT_COMMA, l->ch);
+            tok = token_new(TT_COMMA, lit_ch);
             break;
         case '+':
-            tok = token_new(TT_PLUS, l->ch);
+            tok = token_new(TT_PLUS, lit_ch);
             break;
         case '{':
-            tok = token_new(TT_LBRACE, l->ch);
+            tok = token_new(TT_LBRACE, lit_ch);
             break;
         case '}':
-            tok = token_new(TT_RBRACE, l->ch);
+            tok = token_new(TT_RBRACE, lit_ch);
             break;
         case 0:
-            tok = (Token) {
-                .literal = 0,
-                .type = TT_EOF,
-            };
+            tok = (Token){.type = TT_EOF, .lit_size = 0, .literal = NULL};
             break;
         default:
-            fprintf(stderr, "ERROR: Unknown char: '%c'", l->ch);
+            if (_is_letter(lex->ch)) {
+                tok.literal = lexer_read_identifier(lex, &tok.lit_size);
+                tok.type = token_lookup_ident(tok.literal);
+                return tok;
+            } else if (_is_digit(lex->ch)) {
+                tok.literal = lexer_read_number(lex, &tok.lit_size);
+                tok.type = TT_INT;
+                return tok;
+            } else {
+                tok = token_new(TT_ILLEGAL, lit_ch);
+            }
             break;
     }
 
-    lexer_read_char(l);
+    lexer_read_char(lex);
     return tok;
+}
+
+char *lexer_read_identifier(Lexer *lex, int *lit_size)
+{
+    int position = lex->position;
+    while (_is_letter(lex->ch)) {
+        lexer_read_char(lex);
+        *lit_size += 1;
+    }
+    int size = lex->position - position;
+    return arena_memdup(&lex->arena, lex->input + position, size);
+}
+
+char *lexer_read_number(Lexer *lex, int *lit_size)
+{
+    int position = lex->position;
+    while (_is_digit(lex->ch)) {
+        lexer_read_char(lex);
+        *lit_size += 1;
+    }
+    int size = lex->position - position;
+    return arena_memdup(&lex->arena, lex->input + position, size);
+}
+
+void lexer_skip_whitespace(Lexer *lex)
+{
+    while (lex->ch == ' ' || lex->ch == '\t' || lex->ch == '\n' || lex->ch == '\r') {
+        lexer_read_char(lex);
+    }
+}
+
+static bool _is_letter(char ch)
+{
+    return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || (ch == '_');
+}
+
+static bool _is_digit(char ch)
+{
+    return '0' <= ch && ch <= '9';
 }

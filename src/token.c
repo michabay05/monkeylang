@@ -1,9 +1,10 @@
 #include "monkey.h"
 
-Token token_new(TokenType type, char ch)
+Token token_new(TokenType type, char *ch)
 {
     return (Token) {
         .type = type,
+        .lit_size = 1,
         .literal = ch
     };
 }
@@ -26,8 +27,18 @@ const char *tt_to_str(TokenType tt)
         case TT_FUNCTION: return "FUNCTION";
         case TT_LET: return "LET";
         default:
-            fprintf(stderr, "Unknown token");
+            fprintf(stderr, "ERROR: Unknown token");
             exit(EXIT_FAILURE);
             break;
     }
+}
+
+TokenType token_lookup_ident(const char *ident)
+{
+    if (!strncmp(ident, "fn", 2)) {
+        return TT_FUNCTION;
+    } else if (!strncmp(ident, "let", 3)) {
+        return TT_LET;
+    }
+    return TT_IDENT;
 }
