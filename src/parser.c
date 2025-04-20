@@ -1,0 +1,98 @@
+#include "monkey.h"
+
+void parser_init(Parser *p, Lexer *l)
+{
+    *p = (Parser){0};
+    p->lexer = l;
+
+    // Read two tokens, so curToken and peekToken are both set
+    parser_next_token(p);
+    parser_next_token(p);
+}
+
+void parser_next_token(Parser *p)
+{
+    p->curr_token = p->peek_token;
+    p->peek_token = lexer_next_token(p->lexer);
+}
+
+bool parser_parse_program(Parser *p, Program *progs)
+{
+    *progs = (Program){0};
+
+    while (p->curr_token.type != TT_EOF) {
+        StatementVT stmt = {0};
+        if (parser_parse_stmt(p, &stmt)) {
+            // Append statment into program
+            fprintf(stderr, "TODO: implement appending to program (pg. 40)");
+            exit(123);
+        }
+        parser_next_token(p);
+    }
+
+    return false;
+}
+
+StatementVT parser_parse_stmt(Parser *p)
+{
+    // Send a void ptr with an enum of what type the data in the void ptr is
+    switch (p->curr_token.type) {
+        case TT_LET:
+            {
+                LetStmt ls = {0};
+                bool res = parser_parse_let_stmt(p, &ls);
+                break;
+            }
+        default:
+            fprintf(stderr, "TODO: implement parsing for other token types (pg. 41)");
+            exit(123);
+    }
+}
+
+bool parser_parse_let_stmt(Parser *p, LetStmt *ls)
+{
+    *ls = (LetStmt){0};
+    ls->token = p->curr_token;
+
+    if (!parser_expect_peek(p, TT_IDENT)) {
+        return false;
+    }
+
+    *ls->name = (Identifier){
+        .token = p->curr_token,
+        .value = p->curr_token.literal,
+        .value_size = p->curr_token.lit_size,
+    };
+
+    if (!parser_expect_peek(p, TT_ASSIGN)) {
+        return false;
+    }
+
+    // TODO: We're skipping the expressions until we
+    // encounter a semicolon
+    while (!parser_curr_token_is(p, TT_SEMICOLON)) {
+        parser_next_token(p);
+    }
+
+    return true;
+}
+
+bool parser_curr_token_is(Parser *p, TokenType tt)
+{
+    return p->curr_token.type == tt;
+}
+
+bool parser_peek_token_is(Parser *p, TokenType tt)
+{
+    return p->peek_token.type == tt;
+}
+
+bool parser_expect_peek(Parser *p, TokenType tt)
+{
+    if (parser_peek_token_is(p, tt)) {
+        parser_next_token(p);
+        return true;
+    } else {
+        return false;
+    }
+}

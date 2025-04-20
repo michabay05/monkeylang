@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+// token.c
 typedef enum
 {
     // Special
@@ -58,6 +59,7 @@ Token token_new(TokenType type, char *ch);
 const char *tt_to_str(TokenType tt);
 TokenType token_lookup_ident(const char *ident);
 
+// lexer.c
 typedef struct {
     char *input;
     int input_size;
@@ -77,5 +79,57 @@ char *lexer_read_identifier(Lexer *lex, int *lit_size);
 void lexer_skip_whitespace(Lexer *lex);
 char *lexer_read_number(Lexer *lex, int *lit_size);
 char lexer_peek_char(Lexer *lex);
+
+// ast.c
+typedef struct {
+    char* (*token_lit_func_ptr)(void);
+} NodeVT;
+
+typedef struct {
+    NodeVT *nvt;
+    void (*stmt_node_func_ptr)(void);
+} StatementVT;
+
+typedef struct {
+    NodeVT *nvt;
+    void (*expr_node_func_ptr)(void);
+} ExpressionVT;
+
+typedef struct {
+    Arena arena;
+    StatementVT *stmts;
+    int stmt_count;
+    int stmt_cap;
+} Program;
+
+typedef struct {
+    Token token;
+    char *value;
+    int value_size;
+} Identifier;
+
+typedef struct {
+    Token token;
+    Identifier *name;
+    ExpressionVT value;
+} LetStmt;
+
+char *program_token_literal(Program *prog);
+
+// parser.c
+typedef struct {
+    Lexer *lexer;
+    Token curr_token;
+    Token peek_token;
+} Parser;
+
+void parser_init(Parser *p, Lexer *l);
+void parser_next_token(Parser *p);
+bool parser_parse_program(Parser *p, Program *progs);
+StatementVT parser_parse_stmt(Parser *p);
+bool parser_parse_let_stmt(Parser *p, LetStmt *ls);
+bool parser_curr_token_is(Parser *p, TokenType tt);
+bool parser_peek_token_is(Parser *p, TokenType tt);
+bool parser_expect_peek(Parser *p, TokenType tt);
 
 #endif // _MONKEY_H_

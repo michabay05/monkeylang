@@ -7,7 +7,7 @@ bool test_next_token()
     char *input = NULL;
     {
         // Get file size
-        const char *filepath = "src/test/lexer_test(ex).monkey";
+        const char *filepath = "src/test/lexer_test.monkey";
         FILE *fp = fopen(filepath, "r");
         if (fp == NULL) {
             fprintf(stderr, "ERROR: Could not find '%s'\n", filepath);
