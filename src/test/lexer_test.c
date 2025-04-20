@@ -41,9 +41,36 @@ bool test_next_token()
         // "};"
         TT_RBRACE, TT_SEMICOLON,
 
-        // let result = add(five, ten);
+        // "let result = add(five, ten);"
         TT_LET, TT_IDENT, TT_ASSIGN, TT_IDENT, TT_LPAREN,
         TT_IDENT, TT_COMMA, TT_IDENT, TT_RPAREN, TT_SEMICOLON,
+
+        // "!-/*5;"
+        TT_BANG, TT_MINUS, TT_SLASH, TT_ASTERISK, TT_INT, TT_SEMICOLON,
+
+        // "5 < 10 > 5;"
+        TT_INT, TT_LT, TT_INT, TT_GT, TT_INT, TT_SEMICOLON,
+
+        // if (5 < 10) {
+        TT_IF, TT_LPAREN, TT_INT, TT_LT, TT_INT, TT_RPAREN, TT_LBRACE,
+
+        // "return true;"
+        TT_RETURN, TT_TRUE, TT_SEMICOLON,
+
+        // "} else {"
+        TT_RBRACE, TT_ELSE, TT_LBRACE,
+
+        // "return false;"
+        TT_RETURN, TT_FALSE, TT_SEMICOLON,
+
+        // "}"
+        TT_RBRACE,
+
+        // "10 == 10"
+        TT_INT, TT_EQ, TT_INT,
+
+        // "10 != 9"
+        TT_INT, TT_NOT_EQ, TT_INT,
 
         TT_EOF
     };
@@ -61,10 +88,30 @@ bool test_next_token()
         "}", ";",
 
         "let", "result", "=", "add", "(",
-        "five", ",", "ten", ")", ";", ""
+        "five", ",", "ten", ")", ";",
+
+        "!", "-", "/", "*", "5", ";",
+
+        "5", "<", "10", ">", "5", ";",
+
+        "if", "(", "5", "<", "10", ")", "{",
+
+        "return", "true", ";",
+
+        "}", "else", "{",
+
+        "return", "false", ";",
+
+        "}",
+
+        "10", "==", "10",
+
+        "10", "!=", "9",
+
+        NULL
     };
     // clang-format on
-    const int N = 37;
+    const int N = sizeof(expected_lit) / sizeof(*expected_lit);
 
     Lexer l = {0};
     lexer_init(&l, input, strlen(input));

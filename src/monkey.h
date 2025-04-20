@@ -20,6 +20,14 @@ typedef enum
     // Operators
     TT_ASSIGN,
     TT_PLUS,
+    TT_MINUS,
+    TT_BANG,
+    TT_ASTERISK,
+    TT_SLASH,
+    TT_LT,
+    TT_GT,
+    TT_EQ,
+    TT_NOT_EQ,
 
     // Delimiters
     TT_COMMA,
@@ -33,6 +41,11 @@ typedef enum
     // Keywords
     TT_FUNCTION,
     TT_LET,
+    TT_TRUE,
+    TT_FALSE,
+    TT_IF,
+    TT_ELSE,
+    TT_RETURN,
 } TokenType;
 
 typedef struct {
@@ -63,5 +76,6 @@ Token lexer_next_token(Lexer *lex);
 char *lexer_read_identifier(Lexer *lex, int *lit_size);
 void lexer_skip_whitespace(Lexer *lex);
 char *lexer_read_number(Lexer *lex, int *lit_size);
+char lexer_peek_char(Lexer *lex);
 
 #endif // _MONKEY_H_

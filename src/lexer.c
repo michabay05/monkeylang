@@ -33,23 +33,55 @@ Token lexer_next_token(Lexer *lex)
     char *lit_ch = arena_memdup(&lex->arena, lex->input + lex->position, 1);
 
     switch (lex->ch) {
-        case '=':
-            tok = token_new(TT_ASSIGN, lit_ch);
+        case '=': {
+            if (lexer_peek_char(lex) == '=') {
+                int pos = lex->position;
+                lexer_read_char(lex);
+                char *lit = arena_memdup(&lex->arena, lex->input + pos, 2);
+                tok = token_new(TT_EQ, lit);
+            } else {
+                tok = token_new(TT_ASSIGN, lit_ch);
+            }
+        } break;
+        case '!': {
+            if (lexer_peek_char(lex) == '=') {
+                int pos = lex->position;
+                lexer_read_char(lex);
+                char *lit = arena_memdup(&lex->arena, lex->input + pos, 2);
+                tok = token_new(TT_NOT_EQ, lit);
+            } else {
+                tok = token_new(TT_BANG, lit_ch);
+            }
+        } break;
+        case '+':
+            tok = token_new(TT_PLUS, lit_ch);
+            break;
+        case '-':
+            tok = token_new(TT_MINUS, lit_ch);
+            break;
+        case '*':
+            tok = token_new(TT_ASTERISK, lit_ch);
+            break;
+        case '/':
+            tok = token_new(TT_SLASH, lit_ch);
+            break;
+        case '<':
+            tok = token_new(TT_LT, lit_ch);
+            break;
+        case '>':
+            tok = token_new(TT_GT, lit_ch);
             break;
         case ';':
             tok = token_new(TT_SEMICOLON, lit_ch);
+            break;
+        case ',':
+            tok = token_new(TT_COMMA, lit_ch);
             break;
         case '(':
             tok = token_new(TT_LPAREN, lit_ch);
             break;
         case ')':
             tok = token_new(TT_RPAREN, lit_ch);
-            break;
-        case ',':
-            tok = token_new(TT_COMMA, lit_ch);
-            break;
-        case '+':
-            tok = token_new(TT_PLUS, lit_ch);
             break;
         case '{':
             tok = token_new(TT_LBRACE, lit_ch);
@@ -105,6 +137,15 @@ void lexer_skip_whitespace(Lexer *lex)
 {
     while (lex->ch == ' ' || lex->ch == '\t' || lex->ch == '\n' || lex->ch == '\r') {
         lexer_read_char(lex);
+    }
+}
+
+char lexer_peek_char(Lexer *lex)
+{
+    if (lex->read_position >= lex->input_size) {
+        return 0;
+    } else {
+        return lex->input[lex->read_position];
     }
 }
 
