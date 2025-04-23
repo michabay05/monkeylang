@@ -7,6 +7,16 @@
 #include <stdbool.h>
 #include <string.h>
 
+#define UNUSED(x) (void)x
+// TODO: implement a better logging system with error and fatal
+#define UNIMPLEMENTED(message)                                                                                  \
+    do {                                                                                           \
+        fprintf(stderr, "%s:%d: TODO: %s\n", __FILE__, __LINE__, message);                         \
+        abort();                                                                                   \
+    } while (0)
+
+extern Arena global_arena;
+
 // token.c
 typedef enum
 {
@@ -69,7 +79,6 @@ typedef struct {
     int read_position;
     // Current char under examination
     char ch;
-    Arena arena;
 } Lexer;
 
 void lexer_init(Lexer *lex, char *input, int input_size);
@@ -82,25 +91,18 @@ char lexer_peek_char(Lexer *lex);
 
 // ast.c
 typedef struct {
-    char* (*token_lit_func_ptr)(void);
+    char *(*token_lit_func_ptr)(void);
 } NodeVT;
 
 typedef struct {
     NodeVT *nvt;
     void (*stmt_node_func_ptr)(void);
-} StatementVT;
+} StmtVT;
 
 typedef struct {
     NodeVT *nvt;
     void (*expr_node_func_ptr)(void);
 } ExpressionVT;
-
-typedef struct {
-    Arena arena;
-    StatementVT *stmts;
-    int stmt_count;
-    int stmt_cap;
-} Program;
 
 typedef struct {
     Token token;
@@ -114,7 +116,29 @@ typedef struct {
     ExpressionVT value;
 } LetStmt;
 
+typedef enum
+{
+    ST_LET
+} StmtType;
+
+typedef struct {
+    StmtType type;
+    void *data;
+} StmtV2;
+
+typedef struct {
+    StmtV2 *items;
+    int count;
+    int capacity;
+} Program;
+
 char *program_token_literal(Program *prog);
+void program_append_stmt(Program *prog, StmtV2 st);
+void letstmt_stmt_node(LetStmt *ls);
+char *letstmt_token_lit(LetStmt *ls);
+void ident_stmt_node(Identifier *ident);
+char *ident_token_lit(Identifier *ident);
+const char *st_type_to_str(StmtType st_type);
 
 // parser.c
 typedef struct {
@@ -126,7 +150,7 @@ typedef struct {
 void parser_init(Parser *p, Lexer *l);
 void parser_next_token(Parser *p);
 bool parser_parse_program(Parser *p, Program *progs);
-StatementVT parser_parse_stmt(Parser *p);
+void *parser_parse_stmt(Parser *p, StmtType *st_type);
 bool parser_parse_let_stmt(Parser *p, LetStmt *ls);
 bool parser_curr_token_is(Parser *p, TokenType tt);
 bool parser_peek_token_is(Parser *p, TokenType tt);

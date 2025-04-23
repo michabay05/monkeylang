@@ -10,7 +10,6 @@ void lexer_init(Lexer *lex, char *input, int input_size)
     *lex = (Lexer){0};
     lex->input = input;
     lex->input_size = input_size;
-    lex->arena = (Arena){0};
     lexer_read_char(lex);
 }
 
@@ -30,14 +29,14 @@ Token lexer_next_token(Lexer *lex)
     Token tok = {0};
 
     lexer_skip_whitespace(lex);
-    char *lit_ch = arena_memdup(&lex->arena, lex->input + lex->position, 1);
+    char *lit_ch = arena_memdup(&global_arena, lex->input + lex->position, 1);
 
     switch (lex->ch) {
         case '=': {
             if (lexer_peek_char(lex) == '=') {
                 int pos = lex->position;
                 lexer_read_char(lex);
-                char *lit = arena_memdup(&lex->arena, lex->input + pos, 2);
+                char *lit = arena_memdup(&global_arena, lex->input + pos, 2);
                 tok = token_new(TT_EQ, lit);
             } else {
                 tok = token_new(TT_ASSIGN, lit_ch);
@@ -47,7 +46,7 @@ Token lexer_next_token(Lexer *lex)
             if (lexer_peek_char(lex) == '=') {
                 int pos = lex->position;
                 lexer_read_char(lex);
-                char *lit = arena_memdup(&lex->arena, lex->input + pos, 2);
+                char *lit = arena_memdup(&global_arena, lex->input + pos, 2);
                 tok = token_new(TT_NOT_EQ, lit);
             } else {
                 tok = token_new(TT_BANG, lit_ch);
@@ -119,7 +118,7 @@ char *lexer_read_identifier(Lexer *lex, int *lit_size)
         *lit_size += 1;
     }
     int size = lex->position - position;
-    return arena_memdup(&lex->arena, lex->input + position, size);
+    return arena_memdup(&global_arena, lex->input + position, size);
 }
 
 char *lexer_read_number(Lexer *lex, int *lit_size)
@@ -130,7 +129,7 @@ char *lexer_read_number(Lexer *lex, int *lit_size)
         *lit_size += 1;
     }
     int size = lex->position - position;
-    return arena_memdup(&lex->arena, lex->input + position, size);
+    return arena_memdup(&global_arena, lex->input + position, size);
 }
 
 void lexer_skip_whitespace(Lexer *lex)

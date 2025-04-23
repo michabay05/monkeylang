@@ -1,4 +1,5 @@
 #include "monkey.h"
+#include <string.h>
 
 void parser_init(Parser *p, Lexer *l)
 {
@@ -21,30 +22,35 @@ bool parser_parse_program(Parser *p, Program *progs)
     *progs = (Program){0};
 
     while (p->curr_token.type != TT_EOF) {
-        StatementVT stmt = {0};
-        if (parser_parse_stmt(p, &stmt)) {
-            // Append statment into program
-            fprintf(stderr, "TODO: implement appending to program (pg. 40)");
-            exit(123);
+        StmtType st_type;
+        void *stmt = parser_parse_stmt(p, &st_type);
+        if (stmt != NULL) {
+            program_append_stmt(progs, (StmtV2){st_type, stmt});
+        } else {
+            fprintf(stderr, "ERROR: stmt parser returned NULL\n");
         }
         parser_next_token(p);
     }
 
-    return false;
+    return true;
 }
 
-StatementVT parser_parse_stmt(Parser *p)
+void *parser_parse_stmt(Parser *p, StmtType *st_type)
 {
     // Send a void ptr with an enum of what type the data in the void ptr is
     switch (p->curr_token.type) {
-        case TT_LET:
-            {
-                LetStmt ls = {0};
-                bool res = parser_parse_let_stmt(p, &ls);
-                break;
+        case TT_LET: {
+            LetStmt *ls = arena_alloc(&global_arena, sizeof(LetStmt));
+            if (parser_parse_let_stmt(p, ls)) {
+                *st_type = ST_LET;
+                return ls;
+            } else {
+                fprintf(stderr, "ERROR: failed to parse let stmt\n");
+                return NULL;
             }
+        }
         default:
-            fprintf(stderr, "TODO: implement parsing for other token types (pg. 41)");
+            fprintf(stderr, "TODO: implement parsing for other token types (pg. 41)\n");
             exit(123);
     }
 }
@@ -58,6 +64,7 @@ bool parser_parse_let_stmt(Parser *p, LetStmt *ls)
         return false;
     }
 
+    ls->name = arena_alloc(&global_arena, sizeof(Identifier));
     *ls->name = (Identifier){
         .token = p->curr_token,
         .value = p->curr_token.literal,

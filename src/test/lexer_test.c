@@ -1,4 +1,3 @@
-#define ARENA_IMPLEMENTATION
 #include "../monkey.h"
 
 bool test_next_token()
@@ -138,5 +137,11 @@ bool test_next_token()
 
 int main(void)
 {
-    return test_next_token();
+    if (test_next_token()) {
+        printf("All tests passed!\n");
+        return 0;
+    } else {
+        printf("Test failed!\n");
+        return 1;
+    }
 }

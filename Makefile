@@ -1,7 +1,10 @@
-COMP_FLAG = -Wall -Wextra -pedantic
+COMP_FLAG = -Wall -Wextra -pedantic -ggdb
 
-lexer_test: src/test/lexer_test.c src/token.c src/lexer.c
-	gcc $(COMP_FLAG) -ggdb -o bin/lexer_test src/test/lexer_test.c src/token.c src/lexer.c
+lexer_test: src/test/lexer_test.c src/token.c src/lexer.c src/arena.c
+	gcc $(COMP_FLAG) -o bin/lexer_test src/test/lexer_test.c src/token.c src/lexer.c src/arena.c
 
-repl: src/repl.c src/token.c src/lexer.c
-	gcc $(COMP_FLAG) -ggdb -o bin/repl src/repl.c src/token.c src/lexer.c
+repl: src/repl.c src/token.c src/lexer.c src/arena.c
+	gcc $(COMP_FLAG) -o bin/repl src/repl.c src/token.c src/lexer.c src/arena.c
+
+parser_test: src/test/parser_test.c src/token.c src/lexer.c src/arena.c src/ast.c src/parser.c
+	gcc $(COMP_FLAG) -o bin/parser_test src/test/parser_test.c src/token.c src/lexer.c src/arena.c src/ast.c src/parser.c

@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#define ARENA_IMPLEMENTATION
 #include "monkey.h"
-#include <string.h>
 
 #define BUF_SIZE 8 * 1024
 

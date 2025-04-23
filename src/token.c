@@ -40,7 +40,7 @@ const char *tt_to_str(TokenType tt)
         case TT_ELSE: return "ELSE";
         case TT_RETURN: return "RETURN";
         default:
-            fprintf(stderr, "ERROR: Unknown token");
+            fprintf(stderr, "ERROR: Unknown token\n");
             exit(EXIT_FAILURE);
             break;
     }

@@ -1,14 +1,35 @@
 #include "../monkey.h"
 
-static bool _test_let_stmt(StatementVT *stmt, const char *name)
+static bool _test_let_stmt(StmtV2 *stmt, const char *name)
 {
-    if (!strncmp(stmt->nvt->token_lit_func_ptr(), "let", 3)) {
-        fprintf(stderr, "ERROR: stmt.token_lit not 'let'. got='%s'", stmt->nvt->token_lit_func_ptr());
+    int name_len = strlen(name);
+    // Confirm type is LET statement
+    if (stmt->type != ST_LET) {
+        fprintf(stderr, "ERROR: not LET stmt. got='%s'\n", st_type_to_str(stmt->type));
         return false;
     }
 
-    fprintf(stderr, "TODO: finish this test (pg. 39)");
-    exit(123);
+    // Check token literal is "let"
+    LetStmt *ls = stmt->data;
+    const char *token_lit = letstmt_token_lit(ls);
+    if (strncmp(token_lit, "let", 3)) {
+        fprintf(stderr, "ERROR: token literal not 'let'. got='%s'\n", token_lit);
+        return false;
+    }
+
+    // Check if identifier is correct
+    if (strncmp(ls->name->value, name, name_len)) {
+        fprintf(stderr, "ERROR: let_stmt.name.value not '%s'. got='%s'\n", name, ls->name->value);
+        return false;
+    }
+
+    token_lit = ident_token_lit(ls->name);
+    if (strncmp(token_lit, name, name_len)) {
+        fprintf(stderr, "ERROR: let ident token name not '%s'. got='%s'\n", name, token_lit);
+        return false;
+    }
+
+    return true;
 }
 
 static bool test_let_stmts(void)
@@ -40,13 +61,12 @@ static bool test_let_stmts(void)
 
     Program prog = {0};
     if (!parser_parse_program(&p, &prog)) {
-        fprintf(stderr, "ERROR: failed to parser program");
+        fprintf(stderr, "ERROR: failed to parse program\n");
         return false;
     }
 
-    if (prog.stmt_count != 3) {
-        fprintf(stderr, "ERROR: prog.Stmts does not contain 3 statements. got=%d\n",
-                prog.stmt_count);
+    if (prog.count != 3) {
+        fprintf(stderr, "ERROR: prog.Stmts does not contain 3 statements. got=%d\n", prog.count);
         return false;
     }
 
@@ -54,8 +74,8 @@ static bool test_let_stmts(void)
     const int N = sizeof(expectedIdent) / sizeof(*expectedIdent);
 
     for (int i = 0; i < N; i++) {
-        StatementVT *stmt = &prog.stmts[i];
-        if (_test_let_stmt(stmt, expectedIdent[i])) return false;
+        if (!_test_let_stmt(&prog.items[i], expectedIdent[i]))
+            return false;
     }
 
     return true;
@@ -63,5 +83,11 @@ static bool test_let_stmts(void)
 
 int main(void)
 {
-    return !test_let_stmts();
+    if (test_let_stmts()) {
+        printf("All tests passed!\n");
+        return 0;
+    } else {
+        printf("Test failed.\n");
+        return 1;
+    }
 }
