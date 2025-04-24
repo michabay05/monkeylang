@@ -1,10 +1,16 @@
 #include "monkey.h"
-#include <string.h>
+#include <stdio.h>
 
+#define DEFAULT_PROG_ERR_CAP 10
 void parser_init(Parser *p, Lexer *l)
 {
     *p = (Parser){0};
     p->lexer = l;
+    p->errors = (ErrorList){
+        .items = arena_alloc(&global_arena, DEFAULT_PROG_ERR_CAP * sizeof(char *)),
+        .count = 0,
+        .capacity = DEFAULT_PROG_ERR_CAP,
+    };
 
     // Read two tokens, so curToken and peekToken are both set
     parser_next_token(p);
@@ -21,13 +27,12 @@ bool parser_parse_program(Parser *p, Program *progs)
 {
     *progs = (Program){0};
 
-    while (p->curr_token.type != TT_EOF) {
+    // while (p->curr_token.type != TT_EOF) {
+    while (!parser_curr_token_is(p, TT_EOF)) {
         StmtType st_type;
         void *stmt = parser_parse_stmt(p, &st_type);
         if (stmt != NULL) {
             program_append_stmt(progs, (StmtV2){st_type, stmt});
-        } else {
-            fprintf(stderr, "ERROR: stmt parser returned NULL\n");
         }
         parser_next_token(p);
     }
@@ -45,13 +50,12 @@ void *parser_parse_stmt(Parser *p, StmtType *st_type)
                 *st_type = ST_LET;
                 return ls;
             } else {
-                fprintf(stderr, "ERROR: failed to parse let stmt\n");
+                // TODO: add assert that parsing has succeeded
                 return NULL;
             }
-        }
+        } break;
         default:
-            fprintf(stderr, "TODO: implement parsing for other token types (pg. 41)\n");
-            exit(123);
+            return NULL;
     }
 }
 
@@ -100,6 +104,17 @@ bool parser_expect_peek(Parser *p, TokenType tt)
         parser_next_token(p);
         return true;
     } else {
+        parser_peek_error(p, tt);
         return false;
     }
+}
+
+void parser_peek_error(Parser *p, TokenType tt)
+{
+    const int BUF_LEN = 1024;
+    char *buf = arena_alloc(&global_arena, BUF_LEN);
+    memset(buf, 0, 1024*sizeof(char));
+    snprintf(buf, BUF_LEN, "expected next token to be %s, got %s instead", tt_to_str(tt),
+             tt_to_str(p->peek_token.type));
+    arena_da_append(&global_arena, &p->errors, buf);
 }

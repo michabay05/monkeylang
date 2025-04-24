@@ -32,6 +32,20 @@ static bool _test_let_stmt(StmtV2 *stmt, const char *name)
     return true;
 }
 
+void check_parser_errors(Parser *p)
+{
+    const int N = p->errors.count;
+    if (N == 0) return;
+    for (int i = 0; i < N; i++) {
+        char *err = p->errors.items[i];
+        fprintf(stderr, "Parser error: %s\n", err);
+    }
+    fprintf(stderr, "ERROR: parser had %d errors.\n", N);
+
+    // Fail now due to the error(s)
+    exit(EXIT_FAILURE);
+}
+
 static bool test_let_stmts(void)
 {
     Arena a = {0};
@@ -60,10 +74,12 @@ static bool test_let_stmts(void)
     parser_init(&p, &l);
 
     Program prog = {0};
-    if (!parser_parse_program(&p, &prog)) {
-        fprintf(stderr, "ERROR: failed to parse program\n");
-        return false;
-    }
+    parser_parse_program(&p, &prog);
+    check_parser_errors(&p);
+    // if (!parser_parse_program(&p, &prog)) {
+    //     fprintf(stderr, "ERROR: failed to parse program\n");
+    //     return false;
+    // }
 
     if (prog.count != 3) {
         fprintf(stderr, "ERROR: prog.Stmts does not contain 3 statements. got=%d\n", prog.count);

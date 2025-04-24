@@ -142,9 +142,16 @@ const char *st_type_to_str(StmtType st_type);
 
 // parser.c
 typedef struct {
+    char **items;
+    int count;
+    int capacity;
+} ErrorList;
+
+typedef struct {
     Lexer *lexer;
     Token curr_token;
     Token peek_token;
+    ErrorList errors;
 } Parser;
 
 void parser_init(Parser *p, Lexer *l);
@@ -155,5 +162,7 @@ bool parser_parse_let_stmt(Parser *p, LetStmt *ls);
 bool parser_curr_token_is(Parser *p, TokenType tt);
 bool parser_peek_token_is(Parser *p, TokenType tt);
 bool parser_expect_peek(Parser *p, TokenType tt);
+void parser_add_error(Parser *p, char *err);
+void parser_peek_error(Parser *p, TokenType tt);
 
 #endif // _MONKEY_H_
