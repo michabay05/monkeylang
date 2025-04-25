@@ -32,7 +32,7 @@ static bool _test_let_stmt(StmtV2 *stmt, const char *name)
     return true;
 }
 
-void check_parser_errors(Parser *p)
+static void check_parser_errors(Parser *p)
 {
     const int N = p->errors.count;
     if (N == 0) return;
@@ -46,13 +46,12 @@ void check_parser_errors(Parser *p)
     exit(EXIT_FAILURE);
 }
 
-static bool test_let_stmts(void)
+bool test_let_stmts(void)
 {
-    Arena a = {0};
     char *input = NULL;
     {
         // Get file size
-        const char *filepath = "src/test/parser_test.monkey";
+        const char *filepath = "src/test/parser_let_test.monkey";
         FILE *fp = fopen(filepath, "r");
         if (fp == NULL) {
             fprintf(stderr, "ERROR: Could not find '%s'\n", filepath);
@@ -63,7 +62,7 @@ static bool test_let_stmts(void)
         rewind(fp);
 
         // Read file content
-        input = arena_alloc(&a, file_size);
+        input = arena_alloc(&global_arena, file_size);
         fread(input, file_size, 1, fp);
         fclose(fp);
     }
@@ -76,10 +75,6 @@ static bool test_let_stmts(void)
     Program prog = {0};
     parser_parse_program(&p, &prog);
     check_parser_errors(&p);
-    // if (!parser_parse_program(&p, &prog)) {
-    //     fprintf(stderr, "ERROR: failed to parse program\n");
-    //     return false;
-    // }
 
     if (prog.count != 3) {
         fprintf(stderr, "ERROR: prog.Stmts does not contain 3 statements. got=%d\n", prog.count);
@@ -97,9 +92,61 @@ static bool test_let_stmts(void)
     return true;
 }
 
+bool test_return_stmts()
+{
+    char *input = NULL;
+    {
+        // Get file size
+        const char *filepath = "src/test/parser_return_test.monkey";
+        FILE *fp = fopen(filepath, "r");
+        if (fp == NULL) {
+            fprintf(stderr, "ERROR: Could not find '%s'\n", filepath);
+            return false;
+        }
+        fseek(fp, 0L, SEEK_END);
+        int file_size = (int)ftell(fp);
+        rewind(fp);
+
+        // Read file content
+        input = arena_alloc(&global_arena, file_size);
+        fread(input, file_size, 1, fp);
+        fclose(fp);
+    }
+
+    Lexer l = {0};
+    lexer_init(&l, input, strlen(input));
+    Parser p = {0};
+    parser_init(&p, &l);
+
+    Program prog = {0};
+    parser_parse_program(&p, &prog);
+    check_parser_errors(&p);
+
+    if (prog.count != 3) {
+        fprintf(stderr, "ERROR: prog.Stmts does not contain 3 statements. got=%d\n", prog.count);
+        return false;
+    }
+
+    char *token_lit = NULL;
+    for (int i = 0; i < prog.count; i++) {
+        StmtV2 st = prog.items[i];
+        if (st.type != ST_RETURN) {
+            fprintf(stderr, "ERROR: stmt not return statement, got=%s\n", st_type_to_str(st.type));
+            continue;
+        }
+        token_lit = returnstmt_token_lit(st.data);
+        if (strncmp(token_lit, "return", 6)) {
+            fprintf(stderr, "ERROR: retstmt.literal not 'return', got=%s\n", token_lit);
+        }
+    }
+
+    return true;
+}
+
 int main(void)
 {
-    if (test_let_stmts()) {
+    bool success = test_let_stmts() & test_return_stmts();
+    if (success) {
         printf("All tests passed!\n");
         return 0;
     } else {

@@ -57,14 +57,26 @@ char *ident_token_lit(Identifier *ident)
     return ident->token.literal;
 }
 
+void returnstmt_stmt_node(ReturnStmt *rs)
+{
+    UNUSED(rs);
+}
+
+char *returnstmt_token_lit(ReturnStmt *rs)
+{
+    return rs->token.literal;
+}
+
 const char *st_type_to_str(StmtType st_type)
 {
     switch (st_type) {
         case ST_LET:
             return "LET";
+        case ST_RETURN:
+            return "RETURN";
         default: {
-            // TODO: add proper handling for unknown type
-            return NULL;
+            fprintf(stderr, "Unknown stmt type: %d\n", st_type);
+            exit(1);
         }
     }
 }

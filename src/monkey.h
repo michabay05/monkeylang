@@ -9,7 +9,7 @@
 
 #define UNUSED(x) (void)x
 // TODO: implement a better logging system with error and fatal
-#define UNIMPLEMENTED(message)                                                                                  \
+#define UNIMPLEMENTED(message)                                                                     \
     do {                                                                                           \
         fprintf(stderr, "%s:%d: TODO: %s\n", __FILE__, __LINE__, message);                         \
         abort();                                                                                   \
@@ -18,8 +18,7 @@
 extern Arena global_arena;
 
 // token.c
-typedef enum
-{
+typedef enum {
     // Special
     TT_ILLEGAL,
     TT_EOF,
@@ -116,9 +115,14 @@ typedef struct {
     ExpressionVT value;
 } LetStmt;
 
-typedef enum
-{
-    ST_LET
+typedef struct {
+    Token token;
+    ExpressionVT value;
+} ReturnStmt;
+
+typedef enum {
+    ST_LET,
+    ST_RETURN,
 } StmtType;
 
 typedef struct {
@@ -139,6 +143,8 @@ char *letstmt_token_lit(LetStmt *ls);
 void ident_stmt_node(Identifier *ident);
 char *ident_token_lit(Identifier *ident);
 const char *st_type_to_str(StmtType st_type);
+void returnstmt_stmt_node(ReturnStmt *rs);
+char *returnstmt_token_lit(ReturnStmt *rs);
 
 // parser.c
 typedef struct {
@@ -159,6 +165,7 @@ void parser_next_token(Parser *p);
 bool parser_parse_program(Parser *p, Program *progs);
 void *parser_parse_stmt(Parser *p, StmtType *st_type);
 bool parser_parse_let_stmt(Parser *p, LetStmt *ls);
+bool parser_parse_return_stmt(Parser *p, ReturnStmt *rs);
 bool parser_curr_token_is(Parser *p, TokenType tt);
 bool parser_peek_token_is(Parser *p, TokenType tt);
 bool parser_expect_peek(Parser *p, TokenType tt);
