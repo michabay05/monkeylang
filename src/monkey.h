@@ -89,19 +89,7 @@ char *lexer_read_number(Lexer *lex, int *lit_size);
 char lexer_peek_char(Lexer *lex);
 
 // ast.c
-typedef struct {
-    char *(*token_lit_func_ptr)(void);
-} NodeVT;
-
-typedef struct {
-    NodeVT *nvt;
-    void (*stmt_node_func_ptr)(void);
-} StmtVT;
-
-typedef struct {
-    NodeVT *nvt;
-    void (*expr_node_func_ptr)(void);
-} ExpressionVT;
+typedef void Expression;
 
 typedef struct {
     Token token;
@@ -112,12 +100,14 @@ typedef struct {
 typedef struct {
     Token token;
     Identifier *name;
-    ExpressionVT value;
+    // TODO: refactor this at some point
+    Expression *value;
 } LetStmt;
 
 typedef struct {
     Token token;
-    ExpressionVT value;
+    // TODO: refactor this at some point
+    Expression *value;
 } ReturnStmt;
 
 typedef enum {
