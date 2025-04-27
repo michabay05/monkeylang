@@ -56,7 +56,11 @@ typedef enum {
     TT_IF,
     TT_ELSE,
     TT_RETURN,
+    TT_COUNT,
 } TokenType;
+
+static_assert(TT_COUNT == 27);
+#define TOKEN_TYPE_COUNT 27
 
 typedef struct {
     TokenType type;
@@ -89,13 +93,22 @@ char *lexer_read_number(Lexer *lex, int *lit_size);
 char lexer_peek_char(Lexer *lex);
 
 // ast.c
-typedef void Expression;
-
 typedef struct {
     Token token;
     char *value;
     int value_size;
 } Identifier;
+
+typedef enum {
+    ET_IDENT,
+} ExprType;
+
+typedef struct {
+    ExprType type;
+    union {
+        Identifier ident;
+    };
+} Expression;
 
 typedef struct {
     Token token;
@@ -112,11 +125,13 @@ typedef struct {
 
 typedef struct {
     Token token;
+    Expression expr;
 } ExprStmt;
 
 typedef enum {
     ST_LET,
     ST_RETURN,
+    ST_EXPR,
 } StmtType;
 
 typedef struct {
@@ -139,6 +154,7 @@ char *letstmt_string(LetStmt *ls);
 void ident_stmt_node(Identifier *ident);
 char *ident_token_lit(Identifier *ident);
 const char *st_type_to_str(StmtType st_type);
+const char *et_type_to_str(ExprType et_type);
 void returnstmt_stmt_node(ReturnStmt *rs);
 char *returnstmt_token_lit(ReturnStmt *rs);
 char *returnstmt_string(ReturnStmt *rs);
@@ -152,12 +168,29 @@ typedef struct {
     int capacity;
 } ErrorList;
 
-typedef struct {
+// Forward declaration
+typedef struct Parser Parser;
+typedef Expression (*PrefixParseFuncPtr)(Parser*);
+typedef Expression (*InfixParseFuncPtr)(Parser*, Expression);
+
+typedef struct Parser {
     Lexer *lexer;
     Token curr_token;
     Token peek_token;
     ErrorList errors;
+    PrefixParseFuncPtr prefix_parse_func[TOKEN_TYPE_COUNT];
+    InfixParseFuncPtr infix_parse_func[TOKEN_TYPE_COUNT];
 } Parser;
+
+typedef enum {
+    EPO_LOWEST = 1,
+    EPO_EQUALS,       // ==
+    EPO_LESSGREATER,  // > or <
+    EPO_SUM,          // +
+    EPO_PRODUCT,      // *
+    EPO_PREFIX,       // -X or !X
+    EPO_CALL,         // myFunction(X)
+} ExprParseOrder;
 
 void parser_init(Parser *p, Lexer *l);
 void parser_next_token(Parser *p);
@@ -165,10 +198,15 @@ bool parser_parse_program(Parser *p, Program *progs);
 void *parser_parse_stmt(Parser *p, StmtType *st_type);
 bool parser_parse_let_stmt(Parser *p, LetStmt *ls);
 bool parser_parse_return_stmt(Parser *p, ReturnStmt *rs);
+bool parser_parse_expr_stmt(Parser *p, ExprStmt *es);
+void parser_parse_expr(Parser *p, ExprParseOrder epo, Expression *expr);
+Expression parser_parse_identifier(Parser *p);
 bool parser_curr_token_is(Parser *p, TokenType tt);
 bool parser_peek_token_is(Parser *p, TokenType tt);
 bool parser_expect_peek(Parser *p, TokenType tt);
 void parser_add_error(Parser *p, char *err);
 void parser_peek_error(Parser *p, TokenType tt);
+void parser_register_prefix(Parser *p, TokenType tt, PrefixParseFuncPtr pre_fn);
+void parser_register_infix(Parser *p, TokenType tt, InfixParseFuncPtr in_fn);
 
 #endif // _MONKEY_H_

@@ -12,6 +12,9 @@ void parser_init(Parser *p, Lexer *l)
         .capacity = DEFAULT_PROG_ERR_CAP,
     };
 
+    memset(p->prefix_parse_func, 0, TOKEN_TYPE_COUNT * sizeof(PrefixParseFuncPtr));
+    parser_register_prefix(p, TT_IDENT, parser_parse_identifier);
+
     // Read two tokens, so curToken and peekToken are both set
     parser_next_token(p);
     parser_next_token(p);
@@ -64,8 +67,16 @@ void *parser_parse_stmt(Parser *p, StmtType *st_type)
                 return NULL;
             }
         } break;
-        default:
-            return NULL;
+        default: {
+            ExprStmt *es = arena_alloc(&global_arena, sizeof(ExprStmt));
+            if (parser_parse_expr_stmt(p, es)) {
+                *st_type = ST_EXPR;
+                return es;
+            } else {
+                // TODO: add assert that parsing has succeeded
+                return NULL;
+            }
+        } break;
     }
 }
 
@@ -112,6 +123,43 @@ bool parser_parse_return_stmt(Parser *p, ReturnStmt *rs)
     return true;
 }
 
+bool parser_parse_expr_stmt(Parser *p, ExprStmt *es)
+{
+    *es = (ExprStmt){0};
+    es->token = p->curr_token;
+    parser_parse_expr(p, EPO_LOWEST, &es->expr);
+
+    // Semicolon here is optional
+    if (parser_peek_token_is(p, TT_SEMICOLON)) {
+        parser_next_token(p);
+    }
+
+    return true;
+}
+
+void parser_parse_expr(Parser *p, ExprParseOrder epo, Expression *expr)
+{
+    *expr = (Expression) {0};
+    UNUSED(epo);
+    PrefixParseFuncPtr pref_fn = p->prefix_parse_func[p->curr_token.type];
+    if (pref_fn == NULL) {
+        UNIMPLEMENTED("parser_parse_expr() at pg. 55");
+    }
+    *expr = pref_fn(p);
+}
+
+Expression parser_parse_identifier(Parser *p)
+{
+    return (Expression) {
+        .type = ET_IDENT,
+        .ident = (Identifier) {
+            .token = p->curr_token,
+            .value = p->curr_token.literal,
+            .value_size = p->curr_token.lit_size
+        },
+    };
+}
+
 bool parser_curr_token_is(Parser *p, TokenType tt)
 {
     return p->curr_token.type == tt;
@@ -141,4 +189,14 @@ void parser_peek_error(Parser *p, TokenType tt)
     snprintf(buf, BUF_LEN, "expected next token to be %s, got %s instead", tt_to_str(tt),
              tt_to_str(p->peek_token.type));
     arena_da_append(&global_arena, &p->errors, buf);
+}
+
+void parser_register_prefix(Parser *p, TokenType tt, PrefixParseFuncPtr pre_fn)
+{
+    p->prefix_parse_func[tt] = pre_fn;
+}
+
+void parser_register_infix(Parser *p, TokenType tt, InfixParseFuncPtr in_fn)
+{
+    p->infix_parse_func[tt] = in_fn;
 }

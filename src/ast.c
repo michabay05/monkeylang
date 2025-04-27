@@ -53,6 +53,8 @@ char *program_string(Program *prog)
             case ST_RETURN:
                 stmt_str = returnstmt_string(stmt.data);
                 break;
+            default:
+                UNIMPLEMENTED("finish implementing program_string()");
         }
         strncat(buf, stmt_str, strlen(stmt_str));
     }
@@ -127,11 +129,25 @@ const char *st_type_to_str(StmtType st_type)
 {
     switch (st_type) {
         case ST_LET:
-            return "LET";
+            return "ST_LET";
         case ST_RETURN:
-            return "RETURN";
+            return "ST_RETURN";
+        case ST_EXPR:
+            return "ST_EXPR";
         default: {
             fprintf(stderr, "Unknown stmt type: %d\n", st_type);
+            exit(1);
+        }
+    }
+}
+
+const char *et_type_to_str(ExprType et_type)
+{
+    switch (et_type) {
+        case ET_IDENT:
+            return "ET_IDENT";
+        default: {
+            fprintf(stderr, "Unknown expr type: %d\n", et_type);
             exit(1);
         }
     }

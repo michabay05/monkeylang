@@ -92,7 +92,7 @@ bool test_let_stmts(void)
     return true;
 }
 
-bool test_return_stmts()
+bool test_return_stmts(void)
 {
     char *input = NULL;
     {
@@ -143,9 +143,62 @@ bool test_return_stmts()
     return true;
 }
 
+bool test_identifier_expr(void)
+{
+    char *input = "foobar;";
+    Lexer lexer = {0};
+    lexer_init(&lexer, input, strlen(input));
+    Parser p = {0};
+    parser_init(&p, &lexer);
+    Program prog = {0};
+    parser_parse_program(&p, &prog);
+    check_parser_errors(&p);
+
+    if (prog.count != 1) {
+        fprintf(stderr, "ERROR: program has not enough statements. got=%d\n", prog.count);
+        return false;
+    }
+
+    StmtV2 stmt = prog.items[0];
+    if (stmt.type != ST_EXPR) {
+        fprintf(
+            stderr,
+            "ERROR: program.statements[0] is not expression statement. got='%s'\n",
+            st_type_to_str(stmt.type)
+        );
+        return false;
+    }
+
+    ExprStmt *es = stmt.data;
+    if (es->expr.type != ET_IDENT) {
+        fprintf(
+            stderr,
+            "ERROR: expr is not an identifier, got='%s'\n",
+            et_type_to_str(es->expr.type)
+        );
+        return false;
+    }
+
+    Identifier ident = es->expr.ident;
+    if (strncmp(ident.value, "foobar", 6)) {
+        fprintf(stderr, "ERROR: ident.value not '%s'. got='%s'\n",
+            "foobar", ident.value
+        );
+        return false;
+    }
+
+    char *token_lit = ident_token_lit(&ident);
+    if (strncmp(token_lit, "foobar", 6)) {
+        fprintf(stderr, "ERROR: ident.token_lit not '%s'. got='%s'", "foobar", token_lit);
+        return false;
+    }
+
+    return true;
+}
+
 int main(void)
 {
-    bool success = test_let_stmts() & test_return_stmts();
+    bool success = test_let_stmts() && test_return_stmts() && test_identifier_expr();
     if (success) {
         printf("All tests passed!\n");
         return 0;

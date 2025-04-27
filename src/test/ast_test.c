@@ -18,15 +18,18 @@ bool test_string()
             .value = "myVar",
             .value_size = 5,
         }),
-        .value = &((Identifier){
-            .token = (Token) {
-                .type = TT_IDENT,
-                .literal = "anotherVar",
-                .lit_size = 10,
-            },
-            .value = "anotherVar",
-            .value_size = 10,
-        }),
+        .value = &((Expression) {
+            .type = ET_IDENT,
+            .ident = (Identifier){
+                .token = (Token) {
+                    .type = TT_IDENT,
+                    .literal = "anotherVar",
+                    .lit_size = 10,
+                },
+                .value = "anotherVar",
+                .value_size = 10,
+            }
+        })
     };
     program_append_stmt(&prog, (StmtV2){.data = &ls, .type = ST_LET});
     char *str = program_string(&prog);
