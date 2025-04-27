@@ -1,4 +1,6 @@
 #include "monkey.h"
+#include <stdio.h>
+#include <string.h>
 
 char *program_token_literal(Program *prog)
 {
@@ -38,6 +40,27 @@ void program_append_stmt(Program *prog, StmtV2 st)
     prog->count += 1;
 }
 
+char *program_string(Program *prog)
+{
+    char buf[8*1024] = {0};
+    for (int i = 0; i < prog->count; i++) {
+        StmtV2 stmt = prog->items[i];
+        char *stmt_str = NULL;
+        switch (stmt.type) {
+            case ST_LET:
+                stmt_str = letstmt_string(stmt.data);
+                break;
+            case ST_RETURN:
+                stmt_str = returnstmt_string(stmt.data);
+                break;
+        }
+        strncat(buf, stmt_str, strlen(stmt_str));
+    }
+
+    // Copy string to heap
+    return arena_memdup(&global_arena, buf, strlen(buf));
+}
+
 void letstmt_stmt_node(LetStmt *ls)
 {
     UNUSED(ls);
@@ -46,6 +69,18 @@ void letstmt_stmt_node(LetStmt *ls)
 char *letstmt_token_lit(LetStmt *ls)
 {
     return ls->token.literal;
+}
+
+char *letstmt_string(LetStmt *ls)
+{
+    char buf[2*1024] = {0};
+    snprintf(
+        buf, 2*1024, "%s %s = %s;",
+        letstmt_token_lit(ls),
+        ls->name->value,
+        "<EXPR_NOT_DONE>"
+    );
+    return arena_memdup(&global_arena, buf, strlen(buf));
 }
 
 void ident_stmt_node(Identifier *ident)
@@ -65,6 +100,27 @@ void returnstmt_stmt_node(ReturnStmt *rs)
 char *returnstmt_token_lit(ReturnStmt *rs)
 {
     return rs->token.literal;
+}
+
+char *returnstmt_string(ReturnStmt *rs)
+{
+    char buf[2*1024] = {0};
+    snprintf(
+        buf, 2*1024, "%s %s;",
+        returnstmt_token_lit(rs),
+        "<EXPR_NOT_DONE>"
+    );
+    return arena_memdup(&global_arena, buf, strlen(buf));
+}
+
+void exprstmt_stmt_node(ExprStmt *es)
+{
+    UNUSED(es);
+}
+
+char *exprstmt_token_lit(ExprStmt *es)
+{
+    return es->token.literal;
 }
 
 const char *st_type_to_str(StmtType st_type)

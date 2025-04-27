@@ -110,6 +110,10 @@ typedef struct {
     Expression *value;
 } ReturnStmt;
 
+typedef struct {
+    Token token;
+} ExprStmt;
+
 typedef enum {
     ST_LET,
     ST_RETURN,
@@ -128,13 +132,18 @@ typedef struct {
 
 char *program_token_literal(Program *prog);
 void program_append_stmt(Program *prog, StmtV2 st);
+char *program_string(Program *prog);
 void letstmt_stmt_node(LetStmt *ls);
 char *letstmt_token_lit(LetStmt *ls);
+char *letstmt_string(LetStmt *ls);
 void ident_stmt_node(Identifier *ident);
 char *ident_token_lit(Identifier *ident);
 const char *st_type_to_str(StmtType st_type);
 void returnstmt_stmt_node(ReturnStmt *rs);
 char *returnstmt_token_lit(ReturnStmt *rs);
+char *returnstmt_string(ReturnStmt *rs);
+void exprstmt_stmt_node(ExprStmt *es);
+char *exprstmt_token_lit(ExprStmt *es);
 
 // parser.c
 typedef struct {
