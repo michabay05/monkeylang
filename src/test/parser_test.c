@@ -5,7 +5,7 @@ static bool _test_let_stmt(StmtV2 *stmt, const char *name)
     int name_len = strlen(name);
     // Confirm type is LET statement
     if (stmt->type != ST_LET) {
-        fprintf(stderr, "ERROR: not LET stmt. got='%s'\n", st_type_to_str(stmt->type));
+        errorf("ERROR: not LET stmt. got='%s'\n", st_type_to_str(stmt->type));
         return false;
     }
 
@@ -13,19 +13,19 @@ static bool _test_let_stmt(StmtV2 *stmt, const char *name)
     LetStmt *ls = stmt->data;
     const char *token_lit = letstmt_token_lit(ls);
     if (strncmp(token_lit, "let", 3)) {
-        fprintf(stderr, "ERROR: token literal not 'let'. got='%s'\n", token_lit);
+        errorf("ERROR: token literal not 'let'. got='%s'\n", token_lit);
         return false;
     }
 
     // Check if identifier is correct
     if (strncmp(ls->name->value, name, name_len)) {
-        fprintf(stderr, "ERROR: let_stmt.name.value not '%s'. got='%s'\n", name, ls->name->value);
+        errorf("ERROR: let_stmt.name.value not '%s'. got='%s'\n", name, ls->name->value);
         return false;
     }
 
     token_lit = ident_token_lit(ls->name);
     if (strncmp(token_lit, name, name_len)) {
-        fprintf(stderr, "ERROR: let ident token name not '%s'. got='%s'\n", name, token_lit);
+        errorf("ERROR: let ident token name not '%s'. got='%s'\n", name, token_lit);
         return false;
     }
 
@@ -38,9 +38,9 @@ static void check_parser_errors(Parser *p)
     if (N == 0) return;
     for (int i = 0; i < N; i++) {
         char *err = p->errors.items[i];
-        fprintf(stderr, "Parser error: %s\n", err);
+        errorf("Parser error: %s\n", err);
     }
-    fprintf(stderr, "ERROR: parser had %d errors.\n", N);
+    errorf("ERROR: parser had %d errors.\n", N);
 
     // Fail now due to the error(s)
     exit(EXIT_FAILURE);
@@ -77,8 +77,7 @@ bool test_let_stmts(void)
     check_parser_errors(&p);
 
     if (prog.count != 3) {
-        fprintf(stderr, "ERROR: prog.Stmts does not contain 3 statements. got=%d\n", prog.count);
-        return false;
+        fatalf("ERROR: prog.Stmts does not contain 3 statements. got=%d\n", prog.count);
     }
 
     const char *expectedIdent[] = {"x", "y", "foobar"};
@@ -123,20 +122,19 @@ bool test_return_stmts(void)
     check_parser_errors(&p);
 
     if (prog.count != 3) {
-        fprintf(stderr, "ERROR: prog.Stmts does not contain 3 statements. got=%d\n", prog.count);
-        return false;
+        fatalf("ERROR: prog.Stmts does not contain 3 statements. got=%d", prog.count);
     }
 
     char *token_lit = NULL;
     for (int i = 0; i < prog.count; i++) {
         StmtV2 st = prog.items[i];
         if (st.type != ST_RETURN) {
-            fprintf(stderr, "ERROR: stmt not return statement, got=%s\n", st_type_to_str(st.type));
+            errorf("ERROR: stmt not return statement, got=%s", st_type_to_str(st.type));
             continue;
         }
         token_lit = returnstmt_token_lit(st.data);
         if (strncmp(token_lit, "return", 6)) {
-            fprintf(stderr, "ERROR: retstmt.literal not 'return', got=%s\n", token_lit);
+            errorf("ERROR: retstmt.literal not 'return', got=%s", token_lit);
         }
     }
 

@@ -35,8 +35,7 @@ bool test_string()
     char *str = program_string(&prog);
     char *expected = "let myVar = anotherVar";
     if (strncmp(str, expected, strlen(expected))) {
-        fprintf(stderr, "program_string() wrong. got='%s'\n", str);
-        return false;
+        errorf("program_string() wrong. got='%s'", str);
     }
     return true;
 }

@@ -80,7 +80,7 @@ char *letstmt_string(LetStmt *ls)
         buf, 2*1024, "%s %s = %s;",
         letstmt_token_lit(ls),
         ls->name->value,
-        "<EXPR_NOT_DONE>"
+        expr_string(ls->value)
     );
     return arena_memdup(&global_arena, buf, strlen(buf));
 }
@@ -89,9 +89,15 @@ void ident_stmt_node(Identifier *ident)
 {
     UNUSED(ident);
 }
+
 char *ident_token_lit(Identifier *ident)
 {
     return ident->token.literal;
+}
+
+char *ident_string(Identifier *ident)
+{
+    return ident_token_lit(ident);
 }
 
 void returnstmt_stmt_node(ReturnStmt *rs)
@@ -110,7 +116,7 @@ char *returnstmt_string(ReturnStmt *rs)
     snprintf(
         buf, 2*1024, "%s %s;",
         returnstmt_token_lit(rs),
-        "<EXPR_NOT_DONE>"
+        expr_string(rs->value)
     );
     return arena_memdup(&global_arena, buf, strlen(buf));
 }
@@ -123,6 +129,19 @@ void exprstmt_stmt_node(ExprStmt *es)
 char *exprstmt_token_lit(ExprStmt *es)
 {
     return es->token.literal;
+}
+
+char *expr_string(Expression *expr)
+{
+    if (expr != NULL) {
+        switch (expr->type) {
+            case ET_IDENT:
+                return expr->ident.value;
+            default:
+                return NULL;
+        }
+    }
+    return NULL;
 }
 
 const char *st_type_to_str(StmtType st_type)

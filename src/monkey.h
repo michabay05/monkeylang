@@ -1,6 +1,8 @@
 #ifndef _MONKEY_H_
 #define _MONKEY_H_
 
+#include "logger.h"
+
 #include "arena.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -160,6 +162,7 @@ char *returnstmt_token_lit(ReturnStmt *rs);
 char *returnstmt_string(ReturnStmt *rs);
 void exprstmt_stmt_node(ExprStmt *es);
 char *exprstmt_token_lit(ExprStmt *es);
+char *expr_string(Expression *expr);
 
 // parser.c
 typedef struct {

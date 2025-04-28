@@ -119,15 +119,13 @@ bool test_next_token()
         Token tok = lexer_next_token(&l);
 
         if (tok.type != expected_tt[i]) {
-            fprintf(stderr, "tests[%d] - tokentype wrong. expected='%s', got='%s'\n", i,
+            fatalf("tests[%d] - tokentype wrong. expected='%s', got='%s'\n", i,
                     tt_to_str(expected_tt[i]), tt_to_str(tok.type));
-            return false;
         }
 
         if (tok.literal != NULL && strncmp(tok.literal, expected_lit[i], tok.lit_size)) {
-            fprintf(stderr, "tests[%d] - literal wrong. expected='%s', got='%s'\n", i,
+            fatalf("tests[%d] - literal wrong. expected='%s', got='%s'\n", i,
                     expected_lit[i], tok.literal);
-            return false;
         }
     }
 
